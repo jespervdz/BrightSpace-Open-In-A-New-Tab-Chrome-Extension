@@ -14,8 +14,10 @@ const docObserver = new MutationObserver((_, observer) => {
   // When there is a content panel, observe it and not the whole doc
   if (contentPanel = document.getElementsByClassName('content-panel')[0]) {
     setTrayAndButton(); // Set the header and button
-    contentPanelObserver.observe(contentPanel, config);
-    observer.disconnect(); // disconnect docObserver
+    if (headerButtonTray != null && d2lbutton != null) {
+      contentPanelObserver.observe(contentPanel, config);
+      observer.disconnect(); // disconnect docObserver
+    }
   }
 });
 
@@ -32,12 +34,15 @@ function setTrayAndButton() {
     if (!(headerButtonTray = contentPanel.getElementsByClassName('header-button-tray')[0]))
       return;
 
-    // Get the html code for the button.
+    // Get the html code for the button and add it to the tray
     fetch(chrome.runtime.getURL('openInNewTabD2LButton.html')).then(r => r.text()).then(html => {
-      // Add the button to the tray
-      headerButtonTray.insertAdjacentHTML('afterbegin', html);
-      d2lbutton = contentPanel.getElementsByClassName('new-tab-button-extension')[0];
-      d2lbutton.addEventListener('click', openFileInNewTab);
+      // Check that the button does not exists; the observer can get called multiple times
+      if (!d2lbutton) {
+        headerButtonTray.insertAdjacentHTML('afterbegin', html);
+        d2lbutton = contentPanel.getElementsByClassName('new-tab-button-extension')[0];
+        d2lbutton.addEventListener('click', openFileInNewTab);
+        setButtonVisibility();
+      }
     });
   } catch {
     console.log('BrightSpace Open Content In A New Tab Error.')
