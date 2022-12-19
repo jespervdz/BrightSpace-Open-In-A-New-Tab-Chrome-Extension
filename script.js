@@ -1,46 +1,46 @@
-// Store the headertray and button
+// Store the headertray, button and contentPanel
 let headerButtonTray = null;
 let d2lbutton = null;
+let contentPanel = null;
 
-// Callback function to execute when mutations are observed
-const callback = (mutationList, observer) => {
-  if (document.readyState === 'complete') {
-    if (headerButtonTray === null || d2lbutton === null)
-      setElements();
-    else
-      setButtonVisibility();
+// Obsere element changes, but not attribute changes
+const config = { childList: true, subtree: true, attributes: false };
+
+// Observer that will observe changes in the content panel
+const contentPanelObserver = new MutationObserver(_ => setButtonVisibility());
+
+// Observer until frame is loaded, will transfer to the contentPanelObserver
+const docObserver = new MutationObserver((_, observer) => {
+  // When there is a content panel, observe it and not the whole doc
+  if (contentPanel = document.getElementsByClassName('content-panel')[0]) {
+    setTrayAndButton(); // Set the header and button
+    contentPanelObserver.observe(contentPanel, config);
+    observer.disconnect(); // disconnect docObserver
   }
-};
+});
 
-// Obsere changes in the document
-const observer = new MutationObserver(callback);
-const config = { childList: true, subtree: true };
-observer.observe(document, config);
+// Observe the whole doc. Will observe only the content panel once it is loaded
+docObserver.observe(document, config);
 
-function setElements() {
+/* Funtions */
+
+// Get the header tray, initialize and insert the d2lbutton
+function setTrayAndButton() {
   // Everything in a try because a million things can go wrong
   try {
+    // Get the header tray
+    if (!(headerButtonTray = contentPanel.getElementsByClassName('header-button-tray')[0]))
+      return;
+
     // Get the html code for the button.
     fetch(chrome.runtime.getURL('openInNewTabD2LButton.html')).then(r => r.text()).then(html => {
-      // Get the header tray where the 
-      let headerButtonTrays = document.getElementsByClassName('header-button-tray');
-
-      if (headerButtonTrays.length > 0) {       
-        headerButtonTray = headerButtonTrays[0];
-
-        // Safety check if it already exists.
-        if (headerButtonTray.getElementsByClassName('new-tab-button-extension').length > 0)
-          return;
-
-        // Add the button to the tray
-        headerButtonTray.insertAdjacentHTML('afterbegin', html);
-        d2lbutton = document.getElementsByClassName('new-tab-button-extension')[0];
-        d2lbutton.addEventListener('click', openFileInNewTab);
-        setButtonVisibility();
-      }
+      // Add the button to the tray
+      headerButtonTray.insertAdjacentHTML('afterbegin', html);
+      d2lbutton = contentPanel.getElementsByClassName('new-tab-button-extension')[0];
+      d2lbutton.addEventListener('click', openFileInNewTab);
     });
   } catch {
-    console.warn('BrightSpace PDF Viewer Error.')
+    console.log('BrightSpace Open Content In A New Tab Error.')
   }
 }
 
@@ -53,32 +53,27 @@ function openFileInNewTab() {
   // Everything in a try because a billion things can go wrong
   try {
     // Get the source url, open it in a new window
-    let docUrl = document.getElementsByTagName('d2l-iframe-wrapper-for-react')[0].getAttribute('src');
+    let iframeWrapper = contentPanel.getElementsByTagName('d2l-iframe-wrapper-for-react')[0];
+    let docUrl = iframeWrapper.getAttribute('src');
     window.open(docUrl);
   } catch {
-    console.warn('BrightSpace PDF Viewer: Error retrieving document URL.')
+    alert('BrightSpace Open Content In A New Tab: Error retrieving document URL.')
   }
 }
 
-// Checks if the page has an content-panel with a file document that can be opened in a new tab
+// Checks if the content-panel has a file document that can be opened in a new tab
 function pageHasDocument() {
   try {
-    let contentPanels = document.getElementsByClassName('content-panel');
-
-    if (contentPanels.length === 0)
-      return false;
-
-    let contentPanel = contentPanels[0];
     return contentPanel.getAttribute('data-attr-activity-type') === 'file';
   } catch {
     return false;
   }
 }
 
-// Checks if the page has BrightSpace's own new tab button
+// Checks if the page has D2L's own new tab button
 function pageHasNewTabIcon() {
   try {
-    return document.getElementsByClassName('new-tab-button')[0] != null;
+    return headerButtonTray.getElementsByClassName('new-tab-button').length > 0;
   } catch {
     return false;
   }
