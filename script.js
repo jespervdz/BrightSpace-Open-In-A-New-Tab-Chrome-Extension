@@ -57,10 +57,12 @@ function setButtonVisibility() {
 function openFileInNewTab() {
   // Everything in a try because a billion things can go wrong
   try {
-    // Get the source url, open it in a new window
-    let iframeWrapper = contentPanel.getElementsByTagName('d2l-iframe-wrapper-for-react')[0];
-    let docUrl = iframeWrapper.getAttribute('src');
-    window.open(docUrl);
+    // Open the content using the API link for the file
+    let id_split = contentPanel.getAttribute('id').split('_');
+    let org = id_split[id_split.length - 2]
+    let topic = id_split[id_split.length - 1]
+    let ancestor = document.location.ancestorOrigins[document.location.ancestorOrigins.length - 1];
+    window.open(`${ancestor}/d2l/api/le/1.38/${org}/content/topics/${topic}/file?stream=true`);
   } catch {
     alert('BrightSpace Open Content In A New Tab: Error retrieving document URL.')
   }
