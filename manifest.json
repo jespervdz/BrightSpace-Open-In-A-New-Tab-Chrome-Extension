@@ -1,18 +1,18 @@
 {
     "name": "BrightSpace Open Content In A New Tab",
-    "version": "1.1",
+    "version": "1.2",
     "description": "BrightSpace Open Content In A New Tab",
     "manifest_version": 3,
     "author": "Jesper van der Zwaag",
     "web_accessible_resources": [
         {
             "resources": ["openInNewTabD2LButton.html"],
-            "matches": [ "https://*.brightspace.com/*" ]
+            "matches": [ "<all_urls>" ]
         }
     ],
     "content_scripts": [
         {
-            "matches": [ "https://*.brightspace.com/*" ],
+            "matches": [ "https://*/d2l/ui/apps/smart-curriculum/*" ],
             "run_at": "document_idle",
             "all_frames": true,
             "js": ["script.js"]
